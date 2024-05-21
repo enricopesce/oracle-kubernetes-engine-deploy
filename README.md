@@ -1,0 +1,1 @@
+pulumi config set compartment_ocid ocid1.compartment.oc1..aaaaaaaaqqu7zehv3kg6wjai3zpxybevpbpylvty4obkh3ao66sn43qantma
