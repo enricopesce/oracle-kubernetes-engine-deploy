@@ -1,7 +1,14 @@
 import pulumi
 import pulumi_oci as oci
 import ipaddress
-from rich.pretty import pprint
+
+
+def get_ads(ads, net):
+    z = []
+    for ad in ads:
+        z.append({"availability_domain": str(ad['name']), "subnet_id": net})
+    return z
+
 
 def subnet_cidr(cidr):
     network = ipaddress.ip_network(cidr, strict=False)
@@ -199,39 +206,42 @@ oke_cluster = oci.containerengine.Cluster(
     )
 )
 
-get_ad_names = oci.identity.get_availability_domains_output(compartment_id=compartment_id)
-
+get_ad_names = oci.identity.get_availability_domains_output(
+    compartment_id=compartment_id)
 ads = get_ad_names.availability_domains
 
-# pulumi.export("bb", new_array)
+node_image_id = oci.core.get_images(compartment_id=compartment_id,
+                                    operating_system=oke_node_operating_system,
+                                    operating_system_version=oke_operating_system_version,
+                                    shape=node_shape,
+                                    sort_by="TIMECREATED",
+                                    sort_order="DESC").images[0].id
 
-# node_image_id = oci.core.get_images(compartment_id=compartment_id,
-#                                     operating_system=oke_node_operating_system,
-#                                     operating_system_version=oke_operating_system_version,
-#                                     shape=node_shape,
-#                                     sort_by="TIMECREATED",
-#                                     sort_order="DESC").images[0].id
-
-# # Create a node pool
-# node_pool = oci.containerengine.NodePool("my-node-pool",
-#     cluster_id=oke_cluster.id,
-#     compartment_id=compartment_id,
-#     name=node_pool_name,
-#     node_shape=node_shape,
-#     node_image_id=node_image_id,
-#     kubernetes_version=kubernetes_version,
-#     node_config_details=oci.containerengine.NodePoolNodeConfigDetailsArgs(
-#         size=1,
-#         placement_configs=[oci.containerengine.NodePoolPlacementConfigDetailsArgs(
-#             availability_domain="exampleAD",
-#             subnet_id=private_subnet.id,
-#         )],
-#     ),
-#     node_source_details=oci.containerengine.NodeSourceViaImageDetailsArgs(
-#         source_type="IMAGE",
-#         image_id=node_image_id
-#     ))
-
+# Create a node pool
+node_pool = oci.containerengine.NodePool(
+    "oke_node_pool_1",
+    cluster_id=oke_cluster.id,
+    compartment_id=compartment_id,
+    kubernetes_version=kubernetes_version,
+    name=node_pool_name,
+    node_config_details=oci.containerengine.NodePoolNodeConfigDetailsArgs(
+        placement_configs=ads.apply(
+            lambda ads: get_ads(ads, private_subnet.id)),
+        size=1,
+        node_pool_pod_network_option_details=oci.containerengine.NodePoolNodeConfigDetailsNodePoolPodNetworkOptionDetailsArgs(
+            cni_type="OCI_VCN_IP_NATIVE",
+            pod_subnet_ids=[private_subnet.id]
+        )
+    ),
+    node_shape=node_shape,
+    node_shape_config=oci.containerengine.NodePoolNodeShapeConfigArgs(
+        memory_in_gbs=16,
+        ocpus=2
+    ),
+    node_source_details=oci.containerengine.NodePoolNodeSourceDetailsArgs(
+        image_id=node_image_id,
+        source_type="IMAGE",
+    ))
 
 pulumi.export('vcn_id', vcn.id)
 pulumi.export('internet_gateway_id', internet_gateway.id)
@@ -242,4 +252,4 @@ pulumi.export('private_subnet_id', private_subnet.id)
 pulumi.export('public_security_list_id', public_security_list.id)
 pulumi.export('private_security_list_id', private_security_list.id)
 pulumi.export("cluster_id", oke_cluster.id)
-
+pulumi.export("node_pool_id", node_pool.id)
