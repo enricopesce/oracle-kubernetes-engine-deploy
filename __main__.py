@@ -1,6 +1,7 @@
 import pulumi
 import pulumi_oci as oci
 import ipaddress
+import os
 
 
 def get_ads(ads, net):
@@ -8,6 +9,15 @@ def get_ads(ads, net):
     for ad in ads:
         z.append({"availability_domain": str(ad['name']), "subnet_id": net})
     return z
+
+
+def get_ssh_key(key_path):
+    if not os.path.isfile(key_path):
+        raise FileNotFoundError(
+            f"SSH public key file not found at path: {key_path}")
+    with open(key_path, 'r') as public_key_file:
+        ssh_key = public_key_file.read()
+    return ssh_key
 
 
 def subnet_cidr(cidr):
@@ -25,10 +35,11 @@ public_subnet_address, private_subnet_address = subnet_cidr(cidr_block)
 
 cluster_name = "my-oke-cluster"
 node_pool_name = "my-node-pool"
-node_shape = "VM.Standard.E3.Flex"
+node_shape = "VM.Standard.E5.Flex"
 kubernetes_version = "v1.29.1"
 oke_node_operating_system = "Oracle Linux"
 oke_operating_system_version = "8"
+oke_min_nodes = "1"
 
 # Configuration variables
 config = pulumi.Config()
@@ -91,6 +102,7 @@ public_security_list = oci.core.SecurityList(
                 "max": 80,
                 "min": 80,
             },
+            "description": "accept ingress HTTP protocol from all"
         },
         {
             "protocol": "6",
@@ -99,6 +111,16 @@ public_security_list = oci.core.SecurityList(
                 "max": 443,
                 "min": 443,
             },
+            "description": "accept ingress HTTPS protocol from all"
+        },
+        {
+            "protocol": "6",
+            "source": "0.0.0.0/0",
+            "tcp_options": {
+                "max": 22,
+                "min": 22,
+            },
+            "description": "accept ingress SSH protocol from all"
         },
     ],
 )
@@ -111,44 +133,24 @@ private_security_list = oci.core.SecurityList(
     display_name="my-private-security-list",
     egress_security_rules=[
         {
+            "destination": oci.core.get_services().services[0].cidr_block,
+            "protocol": "all",
+            "destination_type": "SERVICE_CIDR_BLOCK",
+            "description": "worker to oci services"
+        },
+        {
             "destination": "0.0.0.0/0",
             "protocol": "all",
-        }
+            "description": "worker to all networks"
+        },
     ],
     ingress_security_rules=[
-        {
-            "protocol": "6",
-            "source": public_subnet_address,
-            "tcp_options": {
-                "max": 22,
-                "min": 22,
-            },
-        }
+        {  # Client access to Kubernetes API endpoint
+            "protocol": "all",
+            "source": "0.0.0.0/0",
+            "description": "acceppt all traffic to private subnet"
+        },
     ],
-)
-
-# Create a Public Subnet within the VCN
-public_subnet = oci.core.Subnet(
-    "myPublicSubnet",
-    compartment_id=compartment_id,
-    security_list_ids=[public_security_list.id],
-    vcn_id=vcn.id,
-    cidr_block=public_subnet_address,
-    display_name="my-public-subnet",
-    dns_label="publicsubnet",
-    prohibit_public_ip_on_vnic=False,
-)
-
-# Create a Private Subnet within the VCN
-private_subnet = oci.core.Subnet(
-    "myPrivateSubnet",
-    compartment_id=compartment_id,
-    security_list_ids=[private_security_list.id],
-    vcn_id=vcn.id,
-    cidr_block=private_subnet_address,
-    display_name="my-private-subnet",
-    dns_label="privatesubnet",
-    prohibit_public_ip_on_vnic=True,
 )
 
 # Create a Route Table for the private subnet with a route via the NAT Gateway
@@ -184,6 +186,32 @@ public_route_table = oci.core.RouteTable(
     ],
 )
 
+# Create a Public Subnet within the VCN
+public_subnet = oci.core.Subnet(
+    "myPublicSubnet",
+    compartment_id=compartment_id,
+    security_list_ids=[public_security_list.id],
+    vcn_id=vcn.id,
+    cidr_block=public_subnet_address,
+    display_name="my-public-subnet",
+    dns_label="publicsubnet",
+    prohibit_public_ip_on_vnic=False,
+    route_table_id=public_route_table
+)
+
+# Create a Private Subnet within the VCN
+private_subnet = oci.core.Subnet(
+    "myPrivateSubnet",
+    compartment_id=compartment_id,
+    security_list_ids=[private_security_list.id],
+    vcn_id=vcn.id,
+    cidr_block=private_subnet_address,
+    display_name="my-private-subnet",
+    dns_label="privatesubnet",
+    prohibit_public_ip_on_vnic=True,
+    route_table_id=private_route_table
+)
+
 # Create the OKE cluster
 oke_cluster = oci.containerengine.Cluster(
     "myOkeCluster",
@@ -214,6 +242,10 @@ node_image_id = oci.core.get_images(compartment_id=compartment_id,
                                     operating_system=oke_node_operating_system,
                                     operating_system_version=oke_operating_system_version,
                                     shape=node_shape,
+                                    # filters=[{"name": "name",
+                                    #          "values": ["\\^.*OKE.*"],
+                                    #          "regex": True
+                                    #          }],
                                     sort_by="TIMECREATED",
                                     sort_order="DESC").images[0].id
 
@@ -227,11 +259,11 @@ node_pool = oci.containerengine.NodePool(
     node_config_details=oci.containerengine.NodePoolNodeConfigDetailsArgs(
         placement_configs=ads.apply(
             lambda ads: get_ads(ads, private_subnet.id)),
-        size=1,
+        size=oke_min_nodes,
         node_pool_pod_network_option_details=oci.containerengine.NodePoolNodeConfigDetailsNodePoolPodNetworkOptionDetailsArgs(
             cni_type="OCI_VCN_IP_NATIVE",
             pod_subnet_ids=[private_subnet.id]
-        )
+        ),
     ),
     node_shape=node_shape,
     node_shape_config=oci.containerengine.NodePoolNodeShapeConfigArgs(
@@ -241,7 +273,9 @@ node_pool = oci.containerengine.NodePool(
     node_source_details=oci.containerengine.NodePoolNodeSourceDetailsArgs(
         image_id=node_image_id,
         source_type="IMAGE",
-    ))
+    ),
+    ssh_public_key=get_ssh_key("./id_dsa.key.pub")
+)
 
 pulumi.export('vcn_id', vcn.id)
 pulumi.export('internet_gateway_id', internet_gateway.id)
