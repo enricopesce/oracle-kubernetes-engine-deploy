@@ -2,13 +2,17 @@ import pulumi
 import pulumi_oci as oci
 import ipaddress
 import os
-
+import re
 
 def get_ads(ads, net):
     z = []
     for ad in ads:
         z.append({"availability_domain": str(ad['name']), "subnet_id": net})
     return z
+
+
+# def get_oke_image(source, pattern):
+#    return list(filter(lambda x: re.search(pattern, x["source_name"]), source))
 
 
 def get_ssh_key(key_path):
@@ -40,6 +44,7 @@ kubernetes_version = "v1.29.1"
 oke_node_operating_system = "Oracle Linux"
 oke_operating_system_version = "8"
 oke_min_nodes = "1"
+node_image_id="ocid1.image.oc1.eu-frankfurt-1.aaaaaaaaxhd3lt7dttn22pwvhzyksgcm3mxbksnowz47b3oku5hbc6rlisvq"
 
 # Configuration variables
 config = pulumi.Config()
@@ -238,16 +243,13 @@ get_ad_names = oci.identity.get_availability_domains_output(
     compartment_id=compartment_id)
 ads = get_ad_names.availability_domains
 
-node_image_id = oci.core.get_images(compartment_id=compartment_id,
-                                    operating_system=oke_node_operating_system,
-                                    operating_system_version=oke_operating_system_version,
-                                    shape=node_shape,
-                                    # filters=[{"name": "name",
-                                    #          "values": ["\\^.*OKE.*"],
-                                    #          "regex": True
-                                    #          }],
-                                    sort_by="TIMECREATED",
-                                    sort_order="DESC").images[0].id
+# test_node_pool_option = oci.containerengine.get_node_pool_option_output(
+#     node_pool_option_id=oke_cluster.id,
+#     compartment_id=compartment_id)
+# c = test_node_pool_option.sources
+# c.apply(lambda x: print(x))
+
+# c.apply(lambda images: get_oke_image(images, "OKE-1.29.1")).apply(lambda x: print(x))
 
 # Create a node pool
 node_pool = oci.containerengine.NodePool(
@@ -276,6 +278,7 @@ node_pool = oci.containerengine.NodePool(
     ),
     ssh_public_key=get_ssh_key("./id_dsa.key.pub")
 )
+
 
 pulumi.export('vcn_id', vcn.id)
 pulumi.export('internet_gateway_id', internet_gateway.id)
