@@ -2,7 +2,8 @@ import pulumi
 import pulumi_oci as oci
 import ipaddress
 import os
-import re
+from pulumi_kubernetes.helm.v3 import Chart, ChartOpts, FetchOpts
+
 
 def get_ads(ads, net):
     z = []
@@ -44,7 +45,7 @@ kubernetes_version = "v1.29.1"
 oke_node_operating_system = "Oracle Linux"
 oke_operating_system_version = "8"
 oke_min_nodes = "1"
-node_image_id="ocid1.image.oc1.eu-frankfurt-1.aaaaaaaaxhd3lt7dttn22pwvhzyksgcm3mxbksnowz47b3oku5hbc6rlisvq"
+node_image_id = "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaaxhd3lt7dttn22pwvhzyksgcm3mxbksnowz47b3oku5hbc6rlisvq"
 
 # Configuration variables
 config = pulumi.Config()
@@ -247,9 +248,8 @@ ads = get_ad_names.availability_domains
 #     node_pool_option_id=oke_cluster.id,
 #     compartment_id=compartment_id)
 # c = test_node_pool_option.sources
-# c.apply(lambda x: print(x))
 
-# c.apply(lambda images: get_oke_image(images, "OKE-1.29.1")).apply(lambda x: print(x))
+# c.apply(lambda images: get_oke_image(images, "Oracle-Linux-8.9.*-OKE-1.29.1.*")).apply(lambda x: pprint(x))
 
 # Create a node pool
 node_pool = oci.containerengine.NodePool(
@@ -279,6 +279,33 @@ node_pool = oci.containerengine.NodePool(
     ssh_public_key=get_ssh_key("./id_dsa.key.pub")
 )
 
+kubeconfig = oci.containerengine.get_cluster_kube_config_output(cluster_id=oke_cluster.id).apply(
+    lambda kube_config: kube_config.content)
+
+# dashboard = Chart(
+#     "dashboard",
+#     ChartOpts(
+#         chart="k8s-dashboard/kubernetes-dashboard",
+#         namespace="dashboard",
+#         fetch_opts=FetchOpts(
+#             repo="https://kubernetes.github.io/dashboard",
+#         ),
+#     ),
+# )
+
+wordpress = Chart(
+    "wordpress",
+    ChartOpts(
+        chart="wordpress",
+        namespace="wordpress",
+        values={
+            "wordpressBlogName": "My Cool Kubernetes Blog!"
+        },
+        fetch_opts=FetchOpts(
+            repo="https://charts.helm.sh/stable",
+        ),
+    ),
+)
 
 pulumi.export('vcn_id', vcn.id)
 pulumi.export('internet_gateway_id', internet_gateway.id)
@@ -290,3 +317,4 @@ pulumi.export('public_security_list_id', public_security_list.id)
 pulumi.export('private_security_list_id', private_security_list.id)
 pulumi.export("cluster_id", oke_cluster.id)
 pulumi.export("node_pool_id", node_pool.id)
+pulumi.export("kubeconfig", kubeconfig)
