@@ -1,10 +1,12 @@
 ###################################################################################################################################
 # https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengnetworkconfigexample.htm#example-oci-cni-publick8sapi_privateworkers_publiclb
+# https://lmukadam.medium.com/creating-flexible-oci-load-balancers-with-oke-bd98e0318976
 ###################################################################################################################################
 import pulumi
 import pulumi_oci as oci
 import ipaddress
 import os
+import requests
 
 
 def get_ads(ads, net):
@@ -44,8 +46,8 @@ def calculate_subnets(cidr, num_subnets):
 
 
 cidr_block = "10.0.0.0/16"
-public_subnet_address, pods_subnet_address, workers_subnet_address = calculate_subnets(
-    cidr_block, 3)
+loadbalancers_subnet_address, public_subnet_address, pods_subnet_address, workers_subnet_address = calculate_subnets(
+    cidr_block, 4)
 
 node_shape = "VM.Standard.E5.Flex"
 kubernetes_version = "v1.29.1"
@@ -153,15 +155,16 @@ public_security_list = oci.core.SecurityList(
             ),
         ),
         oci.core.SecurityListIngressSecurityRuleArgs(
-            description="Load balancer listener protocol and port. Customize as required.",
+            description="External access to Kubernetes API endpoint.",
             protocol="6",
-            source=pods_subnet_address,
+            source="0.0.0.0/0",
             source_type="CIDR_BLOCK",
             tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
-                max=443,
-                min=443,
+                max=6443,
+                min=6443,
             ),
-        ),
+        )
+
     ],
     egress_security_rules=[
         oci.core.SecurityListEgressSecurityRuleArgs(
@@ -206,35 +209,15 @@ public_security_list = oci.core.SecurityList(
             destination=pods_subnet_address,
             destination_type="CIDR_BLOCK",
         ),
-        oci.core.SecurityListEgressSecurityRuleArgs(
-            description="Load balancer to worker nodes node ports.",
-            protocol="6",
-            destination=workers_subnet_address,
-            destination_type="CIDR_BLOCK",
-            tcp_options=oci.core.SecurityListEgressSecurityRuleTcpOptionsArgs(
-                min=30000,
-                max=32767,
-            ),
-        ),
-        oci.core.SecurityListEgressSecurityRuleArgs(
-            description="Allow load balancer to communicate with kube-proxy on worker nodes.",
-            protocol="6",
-            destination=workers_subnet_address,
-            destination_type="CIDR_BLOCK",
-            tcp_options=oci.core.SecurityListEgressSecurityRuleTcpOptionsArgs(
-                max=10256,
-                min=10256,
-            ),
-        ),
     ],
 )
 
 # Create a separate Security List for the Workers Subnet
 workers_security_list = oci.core.SecurityList(
-    "PrivateSecurityList",
+    "WorkersSecurityList",
     compartment_id=compartment_id,
     vcn_id=vcn.id,
-    display_name="PrivateSecurityList",
+    display_name="WorkersSecurityList",
     ingress_security_rules=[
         oci.core.SecurityListIngressSecurityRuleArgs(
             description="Allow Kubernetes API endpoint to communicate with worker nodes.",
@@ -259,7 +242,7 @@ workers_security_list = oci.core.SecurityList(
         oci.core.SecurityListIngressSecurityRuleArgs(
             description="Load balancer to worker nodes node ports.",
             protocol="6",
-            source=pods_subnet_address,
+            source=loadbalancers_subnet_address,
             source_type="CIDR_BLOCK",
             tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
                 min=30000,
@@ -269,7 +252,7 @@ workers_security_list = oci.core.SecurityList(
         oci.core.SecurityListIngressSecurityRuleArgs(
             description="Allow load balancer to communicate with kube-proxy on worker nodes.",
             protocol="6",
-            source=pods_subnet_address,
+            source=loadbalancers_subnet_address,
             source_type="CIDR_BLOCK",
             tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
                 min=10256,
@@ -319,6 +302,16 @@ workers_security_list = oci.core.SecurityList(
             tcp_options=oci.core.SecurityListEgressSecurityRuleTcpOptionsArgs(
                 max=12250,
                 min=12250,
+            ),
+        ),
+        oci.core.SecurityListEgressSecurityRuleArgs(
+            description="Access to external (ex Dokcer) container registry",
+            protocol="6",
+            destination="0.0.0.0/0",
+            destination_type="CIDR_BLOCK",
+            tcp_options=oci.core.SecurityListEgressSecurityRuleTcpOptionsArgs(
+                max=443,
+                min=443,
             ),
         ),
     ],
@@ -406,6 +399,80 @@ pods_security_list = oci.core.SecurityList(
     ],
 )
 
+
+# Create a separate Security List for the Public Subnet
+loadbalancers_security_list = oci.core.SecurityList(
+    "LoadBalancersSecurityList",
+    compartment_id=compartment_id,
+    vcn_id=vcn.id,
+    display_name="LoadBalancersSecurityList",
+    ingress_security_rules=[
+        oci.core.SecurityListIngressSecurityRuleArgs(
+            description="Load balancer listener protocol and port. Customize as required.",
+            protocol="6",
+            source=pods_subnet_address,
+            source_type="CIDR_BLOCK",
+            tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
+                max=443,
+                min=443,
+            ),
+        ),
+        oci.core.SecurityListIngressSecurityRuleArgs(
+            description="Load balancer listener protocol and port. Customize as required.",
+            protocol="6",
+            source=pods_subnet_address,
+            source_type="CIDR_BLOCK",
+            tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
+                max=80,
+                min=80,
+            ),
+        ),
+        oci.core.SecurityListIngressSecurityRuleArgs(
+            description="Load balancer listener protocol and port. Customize as required.",
+            protocol="6",
+            source="0.0.0.0/0",
+            source_type="CIDR_BLOCK",
+            tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
+                max=443,
+                min=443,
+            ),
+        ),
+        oci.core.SecurityListIngressSecurityRuleArgs(
+            description="Load balancer listener protocol and port. Customize as required.",
+            protocol="6",
+            source="0.0.0.0/0",
+            source_type="CIDR_BLOCK",
+            tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
+                max=80,
+                min=80,
+            ),
+        ),
+    ],
+    egress_security_rules=[
+        oci.core.SecurityListEgressSecurityRuleArgs(
+            description="Load balancer to worker nodes node ports.",
+            protocol="6",
+            destination=workers_subnet_address,
+            destination_type="CIDR_BLOCK",
+            tcp_options=oci.core.SecurityListEgressSecurityRuleTcpOptionsArgs(
+                min=30000,
+                max=32767,
+            ),
+        ),
+        oci.core.SecurityListEgressSecurityRuleArgs(
+            description="Allow load balancer to communicate with kube-proxy on worker nodes.",
+            protocol="6",
+            destination=workers_subnet_address,
+            destination_type="CIDR_BLOCK",
+            tcp_options=oci.core.SecurityListEgressSecurityRuleTcpOptionsArgs(
+                max=10256,
+                min=10256,
+            ),
+        ),
+    ],
+)
+
+
 # Create a Route Table for the private subnet with a route via the NAT Gateway
 workers_route_table = oci.core.RouteTable(
     "WorkersRouteTable",
@@ -425,24 +492,24 @@ workers_route_table = oci.core.RouteTable(
     ],
 )
 
-# Create a Route Table for the private subnet with a route via the NAT Gateway
-pods_route_table = oci.core.RouteTable(
-    "PodsRouteTable",
-    compartment_id=compartment_id,
-    vcn_id=vcn.id,
-    display_name="PodsRouteTable",
-    route_rules=[
-        oci.core.RouteTableRouteRuleArgs(
-            destination="0.0.0.0/0",
-            network_entity_id=nat_gateway.id,
-        ),
-        oci.core.RouteTableRouteRuleArgs(
-            destination=oci.core.get_services().services[0].cidr_block,
-            destination_type="SERVICE_CIDR_BLOCK",
-            network_entity_id=service_gateway.id,
-        ),
-    ],
-)
+# # Create a Route Table for the private subnet with a route via the NAT Gateway
+# pods_route_table = oci.core.RouteTable(
+#     "PodsRouteTable",
+#     compartment_id=compartment_id,
+#     vcn_id=vcn.id,
+#     display_name="PodsRouteTable",
+#     route_rules=[
+#         oci.core.RouteTableRouteRuleArgs(
+#             destination="0.0.0.0/0",
+#             network_entity_id=nat_gateway.id,
+#         ),
+#         oci.core.RouteTableRouteRuleArgs(
+#             destination=oci.core.get_services().services[0].cidr_block,
+#             destination_type="SERVICE_CIDR_BLOCK",
+#             network_entity_id=service_gateway.id,
+#         ),
+#     ],
+# )
 
 # Create a Route Table for the public subnet with a route via the Internet Gateway
 public_route_table = oci.core.RouteTable(
@@ -450,6 +517,20 @@ public_route_table = oci.core.RouteTable(
     compartment_id=compartment_id,
     vcn_id=vcn.id,
     display_name="PublicRouteTable",
+    route_rules=[
+        oci.core.RouteTableRouteRuleArgs(
+            destination="0.0.0.0/0",
+            network_entity_id=internet_gateway.id,
+        ),
+    ],
+)
+
+# Create a Route Table for the loadbalancers subnet with a route via the Internet Gateway
+loadbalancers_route_table = oci.core.RouteTable(
+    "LoadBalancersRouteTable",
+    compartment_id=compartment_id,
+    vcn_id=vcn.id,
+    display_name="LoadBalancersRouteTable",
     route_rules=[
         oci.core.RouteTableRouteRuleArgs(
             destination="0.0.0.0/0",
@@ -497,6 +578,19 @@ pods_subnet = oci.core.Subnet(
     route_table_id=workers_route_table
 )
 
+# Create a LoadBalancers Subnet within the VCN
+loadbalancers_subnet = oci.core.Subnet(
+    "LoadBalancersSubnet",
+    compartment_id=compartment_id,
+    security_list_ids=[loadbalancers_security_list.id],
+    vcn_id=vcn.id,
+    cidr_block=loadbalancers_subnet_address,
+    display_name="LoadBalancersSubnet",
+    dns_label="loadbalancers",
+    prohibit_public_ip_on_vnic=False,
+    route_table_id=loadbalancers_route_table
+)
+
 # # Create a Network Security Group (NSG) to protect the Kubernetes endpoint
 # network_security_group_oke_endpoint = oci.core.NetworkSecurityGroup(
 #     "exampleNsg",
@@ -530,7 +624,7 @@ oke_cluster = oci.containerengine.Cluster(
     name="OkeCluster",
     kubernetes_version=kubernetes_version,
     options=oci.containerengine.ClusterOptionsArgs(
-        service_lb_subnet_ids=[public_subnet.id],
+        service_lb_subnet_ids=[loadbalancers_subnet.id],
         kubernetes_network_config=oci.containerengine.ClusterOptionsKubernetesNetworkConfigArgs(
             pods_cidr="10.2.0.0/16",
             services_cidr="10.3.0.0/16",
@@ -579,13 +673,10 @@ node_pool = oci.containerengine.NodePool(
 )
 
 # Retrieve the kubeconfig
-kubeconfig = oci.containerengine.get_cluster_kube_config(
-    cluster_id=oke_cluster.id)
-
-# Write the kubeconfig to a local file
-kubeconfig_file = "kubeconfig.yaml"
-with open(kubeconfig_file, "w") as f:
-    f.write(kubeconfig.content)
+cluster_kube_config = oke_cluster.id.apply(
+    lambda cid: oci.containerengine.get_cluster_kube_config(cluster_id=cid))
+cluster_kube_config.content.apply(
+    lambda cc: open('kubeconfig', 'w+').write(cc))
 
 pulumi.export('vcn_id', vcn.id)
 pulumi.export('internet_gateway_id', internet_gateway.id)
@@ -597,6 +688,6 @@ pulumi.export('public_security_list_id', public_security_list.id)
 pulumi.export('workers_security_list_id', workers_security_list.id)
 pulumi.export('pods_security_list_id', pods_security_list.id)
 
-# pulumi.export("cluster_id", oke_cluster.id)
-# pulumi.export("node_pool_id", node_pool.id)
-pulumi.export("kubeconfig", kubeconfig)
+pulumi.export("cluster_id", oke_cluster.id)
+pulumi.export("node_pool_id", node_pool.id)
+# pulumi.export("kubeconfig", cluster_kube_config)

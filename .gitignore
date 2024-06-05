@@ -3,3 +3,4 @@ __pycache__
 id_dsa.key.pub
 Pulumi.*.yaml
 notes.md
+kubeconfig
