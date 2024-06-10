@@ -6,7 +6,10 @@ import pulumi
 import pulumi_oci as oci
 import ipaddress
 import os
-import requests
+
+###################################################################################################################################
+# Utils
+###################################################################################################################################
 
 
 def get_ads(ads, net):
@@ -14,16 +17,6 @@ def get_ads(ads, net):
     for ad in ads:
         z.append({"availability_domain": str(ad['name']), "subnet_id": net})
     return z
-
-# def get_oke_image(source, pattern):
-#    return list(filter(lambda x: re.search(pattern, x["source_name"]), source))
-
-# test_node_pool_option = oci.containerengine.get_node_pool_option_output(
-#     node_pool_option_id=oke_cluster.id,
-#     compartment_id=compartment_id)
-# c = test_node_pool_option.sources
-
-# c.apply(lambda images: get_oke_image(images, "Oracle-Linux-8.9.*-OKE-1.29.1.*")).apply(lambda x: pprint(x))
 
 
 def get_ssh_key(key_path):
@@ -45,26 +38,33 @@ def calculate_subnets(cidr, num_subnets):
     return subnet_strings
 
 
-cidr_block = "10.0.0.0/16"
-loadbalancers_subnet_address, public_subnet_address, pods_subnet_address, workers_subnet_address = calculate_subnets(
-    cidr_block, 4)
-
-node_shape = "VM.Standard.E5.Flex"
-kubernetes_version = "v1.29.1"
-oke_node_operating_system = "Oracle Linux"
-oke_operating_system_version = "8"
-oke_min_nodes = "1"
-node_image_id = "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaaxhd3lt7dttn22pwvhzyksgcm3mxbksnowz47b3oku5hbc6rlisvq"
-
+###################################################################################################################################
 # Configuration variables
+###################################################################################################################################
+
 config = pulumi.Config()
 compartment_id = config.require("compartment_ocid")
+vcn_cidr_block = config.require("vcn_cidr_block")
+node_shape = config.require("node_shape")
+kubernetes_version = config.require("kubernetes_version")
+oke_min_nodes = config.require("oke_min_nodes")
+node_image_id = config.require("node_image_id")
+oke_ocpus = config.require("oke_ocpus")
+oke_memory_in_gbs = config.require("oke_memory_in_gbs")
+ssh_key_path = config.require("ssh_key_path")
+
+loadbalancers_subnet_address, public_subnet_address, pods_subnet_address, workers_subnet_address, oke_pods_cidr, oke_services_cidr = calculate_subnets(
+    vcn_cidr_block, 6)
+
+###################################################################################################################################
+# Infrastructure code
+###################################################################################################################################
 
 # Create a VCN
 vcn = oci.core.Vcn(
     "vcn",
     compartment_id=compartment_id,
-    cidr_block=cidr_block,
+    cidr_block=vcn_cidr_block,
     display_name="vcn",
     dns_label="vcn",
 )
@@ -492,25 +492,6 @@ workers_route_table = oci.core.RouteTable(
     ],
 )
 
-# # Create a Route Table for the private subnet with a route via the NAT Gateway
-# pods_route_table = oci.core.RouteTable(
-#     "PodsRouteTable",
-#     compartment_id=compartment_id,
-#     vcn_id=vcn.id,
-#     display_name="PodsRouteTable",
-#     route_rules=[
-#         oci.core.RouteTableRouteRuleArgs(
-#             destination="0.0.0.0/0",
-#             network_entity_id=nat_gateway.id,
-#         ),
-#         oci.core.RouteTableRouteRuleArgs(
-#             destination=oci.core.get_services().services[0].cidr_block,
-#             destination_type="SERVICE_CIDR_BLOCK",
-#             network_entity_id=service_gateway.id,
-#         ),
-#     ],
-# )
-
 # Create a Route Table for the public subnet with a route via the Internet Gateway
 public_route_table = oci.core.RouteTable(
     "PublicRouteTable",
@@ -662,14 +643,14 @@ node_pool = oci.containerengine.NodePool(
     ),
     node_shape=node_shape,
     node_shape_config=oci.containerengine.NodePoolNodeShapeConfigArgs(
-        memory_in_gbs=16,
-        ocpus=2
+        memory_in_gbs=oke_memory_in_gbs,
+        ocpus=oke_ocpus
     ),
     node_source_details=oci.containerengine.NodePoolNodeSourceDetailsArgs(
         image_id=node_image_id,
         source_type="IMAGE",
     ),
-    ssh_public_key=get_ssh_key("./id_dsa.key.pub")
+    ssh_public_key=get_ssh_key(ssh_key_path)
 )
 
 # Retrieve the kubeconfig
@@ -690,4 +671,3 @@ pulumi.export('pods_security_list_id', pods_security_list.id)
 
 pulumi.export("cluster_id", oke_cluster.id)
 pulumi.export("node_pool_id", node_pool.id)
-# pulumi.export("kubeconfig", cluster_kube_config)

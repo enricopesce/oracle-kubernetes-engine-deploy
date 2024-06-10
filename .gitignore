@@ -4,3 +4,4 @@ id_dsa.key.pub
 Pulumi.*.yaml
 notes.md
 kubeconfig
+Pulumi.dev.yaml

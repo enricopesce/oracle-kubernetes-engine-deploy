@@ -8,3 +8,35 @@ config:
   pulumi:tags:
     value:
       pulumi:template: python
+  vcn_cidr_block:
+    type: string
+    description: The network CIDR where the cluster will run
+    default: "10.0.0.0/16"
+  node_shape:
+    type: string
+    description: Shape type for the OKE cluster nodes aka workers
+    default: VM.Standard.E5.Flex
+  kubernetes_version:
+    type: string
+    description: The kubernetes version
+    default: "v1.29.1"
+  oke_min_nodes:
+    type: string
+    description: The starting worker nodes
+    default: "3"
+  node_image_id:
+    type: string
+    description: The starting worker nodes
+    default: "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaaxhd3lt7dttn22pwvhzyksgcm3mxbksnowz47b3oku5hbc6rlisvq"
+  oke_ocpus:
+    type: string
+    description: The OCPU configured in every worker nodes
+    default: "2"
+  oke_memory_in_gbs:
+    type: string
+    description: The Memory in GB configured in every worker nodes
+    default: "32"
+  ssh_key_path:
+    type: string
+    description: The Memory in GB configured in every worker nodes
+    default: "id_dsa.key.pub"
