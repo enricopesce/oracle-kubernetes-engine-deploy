@@ -23,6 +23,10 @@ The architecture defined is based on the well written [OCI article](https://docs
 
 ![OKE architecture](arch.png "OKE architecture")
 
+OKE cluster is depolyed as [BASIC](https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengcomparingenhancedwithbasicclusters_topic.htm) cluster type with no costs.
+
+Costs depending on shape type and nodes selected, please estimate the correct costs with the [Cost estimator page](https://www.oracle.com/cloud/costestimator.html).
+
 ## Why Pulumi?
 
 I chose Pulumi because it is very easy to automate and develop logical implementatios. The main features are:
