@@ -59,6 +59,7 @@ Optional: Use local state file (if you don't save your data on pulumi cloud)
 ```
 mkdir oci-stack-statefile
 pulumi login file://oci-stack-statefile
+pulumi stack init testing
 ```
 
 There are some configurations necessary to personalize the stack configuration.
@@ -79,6 +80,7 @@ pulumi config set oke_min_nodes "3"
 pulumi config set node_image_id "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaaxhd3lt7dttn22pwvhzyksgcm3mxbksnowz47b3oku5hbc6rlisvq"
 pulumi config set oke_ocpus "2"
 pulumi config set oke_memory_in_gbs "32"
+pulumi config set ssh_key_path "Your public id_dsa key file path"
 ```
 
 I suggest to use all options to best fit you requirements.

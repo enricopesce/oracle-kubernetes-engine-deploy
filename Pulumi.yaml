@@ -38,5 +38,5 @@ config:
     default: "32"
   ssh_key_path:
     type: string
-    description: The Memory in GB configured in every worker nodes
-    default: "id_dsa.key.pub"
+    description: The ssh key
+    default: ""
