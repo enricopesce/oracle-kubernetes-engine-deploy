@@ -46,7 +46,7 @@ I chose Pulumi because it is very easy to automate and develop logical implement
 
 Clone this repository and downloads all Python requirements.
 
-```
+``` bash
 git clone https://github.com/enricopesce/easyoke.git
 cd easyoke
 pip install -r requirements.txt
@@ -56,7 +56,7 @@ pip install -r requirements.txt
 
 Optional: Use local state file (if you don't save your data on pulumi cloud)
 
-```
+``` bash
 mkdir oci-stack-statefile
 pulumi login file://oci-stack-statefile
 pulumi stack init testing
@@ -66,21 +66,21 @@ There are some configurations necessary to personalize the stack configuration.
 
 Required config:
 
-```
+``` bash
 pulumi config set compartment_ocid "Your compartment ID"
 ```
 
 Optional configs:
 
-```
+``` bash
 pulumi config set vcn_cidr_block "10.0.0.0/16"
 pulumi config set node_shape "VM.Standard.E5.Flex"
 pulumi config set kubernetes_version "v1.29.1"
-pulumi config set oke_min_nodes "3"
-pulumi config set node_image_id "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaaxhd3lt7dttn22pwvhzyksgcm3mxbksnowz47b3oku5hbc6rlisvq"
-pulumi config set oke_ocpus "2"
-pulumi config set oke_memory_in_gbs "32"
-pulumi config set ssh_key_path "Your public id_dsa key file path"
+pulumi config set oke_min_nodes "3" # minimal Kubernetes nodes
+pulumi config set node_image_id "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaaxhd3lt7dttn22pwvhzyksgcm3mxbksnowz47b3oku5hbc6rlisvq" # the optimized compute OKE image
+pulumi config set oke_ocpus "2" # OCPU numbers per node
+pulumi config set oke_memory_in_gbs "32" # RAM memory per node
+pulumi config set ssh_key_path "Your public id_dsa key file path" 
 ```
 
 I suggest to use all options to best fit you requirements.
@@ -89,7 +89,7 @@ I suggest to use all options to best fit you requirements.
 
 The deployment phase is very easy:
 
-```
+``` bash
 pulumi up
 Please choose a stack, or create a new one: <create a new stack>
 Please enter your desired stack name: oke 
@@ -102,7 +102,7 @@ The creation needs 10/15 minutes
 
 If the deployment is done, you can use directly the created kubeconfig file in the same path or copy where you prefer
 
-```
+``` bash
 chmod 600 kubeconfig
 export KUBECONFIG=$PWD/kubeconfig
 kubectl get pods -A
@@ -132,6 +132,6 @@ The stack deletion is:
 
 Delete the possible application load balancer (via OCI Console ) or clean the Kubernetes services (Using kubectl) before destroying the stack.
 
-```
+``` bash
 pulumi destroy
 ```
