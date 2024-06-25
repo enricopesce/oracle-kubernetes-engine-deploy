@@ -16,6 +16,13 @@ The main requirements that motivated me to develop this code are as follows:
 - **Functionality**: Most online examples available are complex and non-functional. This code provides a working Kubernetes cluster.
 - **Well-architected**: The template is designed to cover the best possible security practices, such as embracing all availability domains, restricted ACLs, native VCN networking etc.
 
+
+## Architecture deployed with EasyOKE
+
+The architecture defined is based on the well written [OCI article](https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengnetworkconfigexample.htm#example-oci-cni-publick8sapi_privateworkers_publiclb)
+
+![OKE architecture](arch.png "OKE architecture")
+
 ## Why Pulumi?
 
 I chose Pulumi because it is very easy to automate and develop logical implementatios. The main features are:
@@ -43,14 +50,14 @@ pip install -r requirements.txt
 
 ## Configuring the stack
 
-There are some configurations necessary to personalize the stack configuration.
-
 Optional: Use local state file (if you don't save your data on pulumi cloud)
 
 ```
 mkdir oci-stack-statefile
 pulumi login file://oci-stack-statefile
 ```
+
+There are some configurations necessary to personalize the stack configuration.
 
 Required config:
 
