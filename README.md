@@ -130,3 +130,7 @@ Before destroying the Pulumi stack, delete the possible resources created by OKE
 ``` bash
 pulumi destroy
 ```
+
+## Feedback and improvements
+
+I'm always looking for feedback and contributions, so feel free to collaborate on the repository or open an issue with any request!
