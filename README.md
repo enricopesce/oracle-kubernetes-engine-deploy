@@ -91,9 +91,6 @@ The deployment phase is very easy:
 
 ``` bash
 pulumi up
-Please choose a stack, or create a new one: <create a new stack>
-Please enter your desired stack name: oke 
-Created stack 'oke'
 ```
 
 The creation needs 10/15 minutes
