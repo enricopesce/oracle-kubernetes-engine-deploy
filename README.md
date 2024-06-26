@@ -2,7 +2,7 @@
 
 ## Automated Kubernetes Cluster Deployment on Oracle Cloud Infrastructure
 
-This IaC code provides a simple way to deploy a OKE cluster on Oracle Cloud Infrastructure.
+This IaC code provides a simple way to automate the deployment a OKE cluster on Oracle Cloud Infrastructure.
 
 It is useful for starting without extensive expertise or as a foundation code ready to extend.
 
@@ -13,7 +13,7 @@ I used Pulumi as an IaC tool because, for various personal reasons, I prefer it 
 The main requirements that motivated me to develop this code are as follows:
 
 - **Simplicity**: I have customers who need to be up and running in minutes. We need a good blueprint to start without complexity and requiring a deep understanding.
-- **Functionality**: Most online examples available are complex and non-functional. This code provides a working Kubernetes cluster.
+- **Functionality**: Most online examples available are complex and non-functional.
 - **Well-architected**: The template is designed to cover the best possible security practices, such as embracing all availability domains, restricted ACLs, native VCN networking etc.
 
 
@@ -29,11 +29,11 @@ Costs depending on shape type and nodes selected, please estimate the correct co
 
 ## Why Pulumi?
 
-I chose Pulumi because it is very easy to automate and develop logical implementatios. The main features are:
+I chose Pulumi because it is very easy to automate and develop logical implementations. The main features are:
 
 - Automatic creation of the VCN with subnetting calculation; you only need to define the supernet CIDR.
-- Automatic discovery of all availability domains to best configure the OKE pools spread across all domains to obtain maximum availability.
-- Kubernetes config file automagically generated, ready to use with `export KUBECONFIG=$PWD/kubeconfig`.
+- Automatic discovery of all availability domains to best configure the OKE pools spreaded across all domains to obtain maximum availability.
+- Kubernetes config file automagically generated, ready to use, for example, with `export KUBECONFIG=$PWD/kubeconfig`.
 
 ## Prerequisites
 
@@ -83,7 +83,7 @@ pulumi config set oke_memory_in_gbs "32" # RAM memory per node
 pulumi config set ssh_key_path "Your public id_dsa key file path" 
 ```
 
-I suggest to use all options to best fit you requirements.
+I suggest to use all options to best fit you requirements, all default settings are saved on Pulumi.yaml file.
 
 ## Deploy the stack
 
@@ -97,7 +97,7 @@ The creation needs 10/15 minutes
 
 ## Configure kubectl
 
-If the deployment is done, you can use directly the created kubeconfig file in the same path or copy where you prefer
+When the deployment is done, you can use directly the kubeconfig file created in the same path or copy where you prefer
 
 ``` bash
 chmod 600 kubeconfig
@@ -125,9 +125,7 @@ kube-system   vcn-native-ip-cni-xl74b                1/1     Running   0        
 
 ## Destroy the stack
 
-The stack deletion is:
-
-Delete the possible application load balancer (via OCI Console ) or clean the Kubernetes services (Using kubectl) before destroying the stack.
+Before destroying the Pulumi stack, delete the possible resources created by OKE, such as application load balancer (via OCI Console ) or clean the Kubernetes services (Using kubectl) 
 
 ``` bash
 pulumi destroy
