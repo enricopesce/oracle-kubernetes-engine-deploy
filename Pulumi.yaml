@@ -15,7 +15,7 @@ config:
   node_shape:
     type: string
     description: Shape type for the OKE cluster nodes aka workers
-    default: VM.Standard.E5.Flex
+    default: VM.Standard.A1.Flex
   kubernetes_version:
     type: string
     description: The kubernetes version
@@ -27,7 +27,7 @@ config:
   node_image_id:
     type: string
     description: The starting worker nodes
-    default: "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaaxhd3lt7dttn22pwvhzyksgcm3mxbksnowz47b3oku5hbc6rlisvq"
+    default: ""
   oke_ocpus:
     type: string
     description: The OCPU configured in every worker nodes
