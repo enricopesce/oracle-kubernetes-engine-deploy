@@ -1,7 +1,3 @@
-###################################################################################################################################
-# https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengnetworkconfigexample.htm#example-oci-cni-publick8sapi_privateworkers_publiclb
-# https://lmukadam.medium.com/creating-flexible-oci-load-balancers-with-oke-bd98e0318976
-###################################################################################################################################
 import pulumi
 import pulumi_oci as oci
 import ipaddress
