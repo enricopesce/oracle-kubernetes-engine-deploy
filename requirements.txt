@@ -1,2 +1,2 @@
-pulumi>=3.0.0,<4.0.0
-pulumi_oci
+pulumi==3.122.0
+pulumi_oci==2.0.0
