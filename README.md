@@ -85,6 +85,23 @@ pulumi config set ssh_key_path "Your public id_dsa key file path"
 
 I suggest to use all options to best fit you requirements, all default settings are saved on Pulumi.yaml file.
 
+you can display all configurations set via the following command
+
+``` bash
+pulumi config 
+KEY                 VALUE
+compartment_ocid    ocid1.compartment.oc1..aaaaaaaaqqu7dsadsadsadsdsdasdsdasdsad
+kubernetes_version  v1.29.1
+node_image_id       
+node_shape          VM.Standard.A1.Flex
+oke_memory_in_gbs   32
+oke_min_nodes       3
+oke_ocpus           2
+ssh_key_path        id_dsa.key.pub
+vcn_cidr_block      10.0.0.0/16
+pulumi:tags         {"pulumi:template":"python"}
+```
+
 ## Deploy the stack
 
 The deployment phase is very easy:

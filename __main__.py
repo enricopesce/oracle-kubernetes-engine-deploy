@@ -1,21 +1,37 @@
-###################################################################################################################################
-# https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengnetworkconfigexample.htm#example-oci-cni-publick8sapi_privateworkers_publiclb
-# https://lmukadam.medium.com/creating-flexible-oci-load-balancers-with-oke-bd98e0318976
-###################################################################################################################################
 import pulumi
 import pulumi_oci as oci
 import ipaddress
 import os
+import re
 
 ###################################################################################################################################
 # Utils
 ###################################################################################################################################
 
 
+def get_oke_image(source, shape, oke_version):
+    version = format_version(oke_version)
+    if re.match("^VM\.Standard\.A\d+\.Flex", shape):
+        pattern = f"(Oracle-Linux).*?(aarch64).*?({version})"
+    elif re.match(".*GPU.*", shape):
+        pattern = f"(Oracle-Linux).*?(GPU).*?({version})"
+    else:
+        pattern = f"(Oracle-Linux)-(?!.*?(?:GPU|aarch64)).*?({version})"
+    return list(filter(lambda x: re.search(pattern, x["source_name"]), source))[0][
+        "image_id"
+    ]
+
+
+def format_version(input_string):
+    version_number = input_string.lstrip("v")
+    formatted_version = re.sub(r"\.", r"\\.", version_number)
+    return formatted_version
+
+
 def get_ads(ads, net):
     z = []
     for ad in ads:
-        z.append({"availability_domain": str(ad['name']), "subnet_id": net})
+        z.append({"availability_domain": str(ad["name"]), "subnet_id": net})
     return z
 
 
@@ -23,7 +39,7 @@ def get_ssh_key(key_path):
     if not os.path.isfile(key_path):
         raise FileNotFoundError(
             f"SSH public key file not found at path: {key_path}")
-    with open(key_path, 'r') as public_key_file:
+    with open(key_path, "r") as public_key_file:
         ssh_key = public_key_file.read()
     return ssh_key
 
@@ -53,8 +69,14 @@ oke_ocpus = config.require("oke_ocpus")
 oke_memory_in_gbs = config.require("oke_memory_in_gbs")
 ssh_key_path = config.require("ssh_key_path")
 
-loadbalancers_subnet_address, public_subnet_address, pods_subnet_address, workers_subnet_address, oke_pods_cidr, oke_services_cidr = calculate_subnets(
-    vcn_cidr_block, 6)
+(
+    loadbalancers_subnet_address,
+    public_subnet_address,
+    pods_subnet_address,
+    workers_subnet_address,
+    oke_pods_cidr,
+    oke_services_cidr,
+) = calculate_subnets(vcn_cidr_block, 6)
 
 ###################################################################################################################################
 # Infrastructure code
@@ -91,11 +113,13 @@ service_gateway = oci.core.ServiceGateway(
     "ServiceGateway",
     compartment_id=compartment_id,
     vcn_id=vcn.id,
-    services=[oci.core.ServiceGatewayServiceArgs(
-        service_id=oci.core.get_services(
-        ).services[0].id
-    )],
-    display_name="ServiceGateway")
+    services=[
+        oci.core.ServiceGatewayServiceArgs(
+            service_id=oci.core.get_services().services[0].id
+        )
+    ],
+    display_name="ServiceGateway",
+)
 
 # Create a separate Security List for the Public Subnet
 public_security_list = oci.core.SecurityList(
@@ -163,15 +187,14 @@ public_security_list = oci.core.SecurityList(
                 max=6443,
                 min=6443,
             ),
-        )
-
+        ),
     ],
     egress_security_rules=[
         oci.core.SecurityListEgressSecurityRuleArgs(
             description="Allow Kubernetes API endpoint to communicate with OKE.",
             protocol="6",
             destination=oci.core.get_services().services[0].cidr_block,
-            destination_type="SERVICE_CIDR_BLOCK"
+            destination_type="SERVICE_CIDR_BLOCK",
         ),
         oci.core.SecurityListEgressSecurityRuleArgs(
             description="Path discovery",
@@ -191,7 +214,7 @@ public_security_list = oci.core.SecurityList(
             tcp_options=oci.core.SecurityListEgressSecurityRuleTcpOptionsArgs(
                 max=10250,
                 min=10250,
-            )
+            ),
         ),
         oci.core.SecurityListEgressSecurityRuleArgs(
             description="Path discovery",
@@ -257,7 +280,6 @@ workers_security_list = oci.core.SecurityList(
             tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
                 min=10256,
                 max=12250,
-
             ),
         ),
     ],
@@ -266,7 +288,7 @@ workers_security_list = oci.core.SecurityList(
             description="Allow worker nodes to access pods.",
             protocol="6",
             destination=pods_subnet_address,
-            destination_type="CIDR_BLOCK"
+            destination_type="CIDR_BLOCK",
         ),
         oci.core.SecurityListEgressSecurityRuleArgs(
             description="Path discovery",
@@ -282,7 +304,7 @@ workers_security_list = oci.core.SecurityList(
             description="Allow worker nodes to communicate with OKE.",
             protocol="6",
             destination=oci.core.get_services().services[0].cidr_block,
-            destination_type="SERVICE_CIDR_BLOCK"
+            destination_type="SERVICE_CIDR_BLOCK",
         ),
         oci.core.SecurityListEgressSecurityRuleArgs(
             description="Kubernetes worker to Kubernetes API endpoint communication.",
@@ -348,7 +370,7 @@ pods_security_list = oci.core.SecurityList(
             description="Allow pods to communicate with other pods.",
             protocol="all",
             destination=pods_subnet_address,
-            destination_type="CIDR_BLOCK"
+            destination_type="CIDR_BLOCK",
         ),
         oci.core.SecurityListEgressSecurityRuleArgs(
             description="Path discovery",
@@ -364,7 +386,7 @@ pods_security_list = oci.core.SecurityList(
             description="Allow pods to communicate with OCI services.",
             protocol="6",
             destination=oci.core.get_services().services[0].cidr_block,
-            destination_type="SERVICE_CIDR_BLOCK"
+            destination_type="SERVICE_CIDR_BLOCK",
         ),
         oci.core.SecurityListEgressSecurityRuleArgs(
             description="(optional) Allow pods to communicate with internet.",
@@ -530,7 +552,7 @@ public_subnet = oci.core.Subnet(
     display_name="PublicSubnet",
     dns_label="public",
     prohibit_public_ip_on_vnic=False,
-    route_table_id=public_route_table
+    route_table_id=public_route_table,
 )
 
 # Create a Private Subnet within the VCN
@@ -543,7 +565,7 @@ workers_subnet = oci.core.Subnet(
     display_name="WorkersSubnet",
     dns_label="workers",
     prohibit_public_ip_on_vnic=True,
-    route_table_id=workers_route_table
+    route_table_id=workers_route_table,
 )
 
 # Create a Pods Subnet within the VCN
@@ -556,7 +578,7 @@ pods_subnet = oci.core.Subnet(
     display_name="PodsSubnet",
     dns_label="pods",
     prohibit_public_ip_on_vnic=True,
-    route_table_id=workers_route_table
+    route_table_id=workers_route_table,
 )
 
 # Create a LoadBalancers Subnet within the VCN
@@ -569,34 +591,8 @@ loadbalancers_subnet = oci.core.Subnet(
     display_name="LoadBalancersSubnet",
     dns_label="loadbalancers",
     prohibit_public_ip_on_vnic=False,
-    route_table_id=loadbalancers_route_table
+    route_table_id=loadbalancers_route_table,
 )
-
-# # Create a Network Security Group (NSG) to protect the Kubernetes endpoint
-# network_security_group_oke_endpoint = oci.core.NetworkSecurityGroup(
-#     "exampleNsg",
-#     compartment_id="your-compartment-id",  # Replace with your compartment OCID
-#     vcn_id="your-vcn-id",  # Replace with your VCN OCID
-#     display_name="example-nsg"
-# )
-
-# # Create a Security Rule to accept traffic on port 6443 the Kubernetes endpoint
-# network_security_group_rule = oci.core.NetworkSecurityGroupSecurityRule(
-#     "exampleNsgRule",
-#     direction="INGRESS",
-#     protocol="6",  # TCP protocol
-#     source="0.0.0.0/0",
-#     source_type="CIDR_BLOCK",
-#     tcp_options={
-#         "destination_port_range": {
-#             "max": 6443,
-#             "min": 6443
-#         }
-#     },
-#     stateless=False,
-#     description="Allow traffic on port 6443",
-#     network_security_group_id=network_security_group_oke_endpoint.id
-# )
 
 # Create the OKE cluster
 oke_cluster = oci.containerengine.Cluster(
@@ -609,20 +605,34 @@ oke_cluster = oci.containerengine.Cluster(
         kubernetes_network_config=oci.containerengine.ClusterOptionsKubernetesNetworkConfigArgs(
             pods_cidr="10.2.0.0/16",
             services_cidr="10.3.0.0/16",
-        )),
-    cluster_pod_network_options=[oci.containerengine.ClusterClusterPodNetworkOptionArgs(
-        cni_type="OCI_VCN_IP_NATIVE",
-    )],
+        ),
+    ),
+    cluster_pod_network_options=[
+        oci.containerengine.ClusterClusterPodNetworkOptionArgs(
+            cni_type="OCI_VCN_IP_NATIVE",
+        )
+    ],
     type="BASIC_CLUSTER",
     vcn_id=vcn.id,
     endpoint_config=oci.containerengine.ClusterEndpointConfigArgs(
-        subnet_id=public_subnet,
-        is_public_ip_enabled=True
-    )
+        subnet_id=public_subnet, is_public_ip_enabled=True
+    ),
 )
 
+if node_image_id == "":
+    test_node_pool_option = oci.containerengine.get_node_pool_option_output(
+        node_pool_option_id=oke_cluster.id, compartment_id=compartment_id
+    )
+
+    c = test_node_pool_option.sources
+    node_image_id = c.apply(
+        lambda images: get_oke_image(images, node_shape, kubernetes_version)
+    )
+
+
 get_ad_names = oci.identity.get_availability_domains_output(
-    compartment_id=compartment_id)
+    compartment_id=compartment_id
+)
 ads = get_ad_names.availability_domains
 
 # Create a node pool
@@ -637,37 +647,36 @@ node_pool = oci.containerengine.NodePool(
             lambda ads: get_ads(ads, workers_subnet.id)),
         size=oke_min_nodes,
         node_pool_pod_network_option_details=oci.containerengine.NodePoolNodeConfigDetailsNodePoolPodNetworkOptionDetailsArgs(
-            cni_type="OCI_VCN_IP_NATIVE",
-            pod_subnet_ids=[pods_subnet.id]
+            cni_type="OCI_VCN_IP_NATIVE", pod_subnet_ids=[pods_subnet.id]
         ),
     ),
     node_shape=node_shape,
     node_shape_config=oci.containerengine.NodePoolNodeShapeConfigArgs(
-        memory_in_gbs=oke_memory_in_gbs,
-        ocpus=oke_ocpus
+        memory_in_gbs=oke_memory_in_gbs, ocpus=oke_ocpus
     ),
     node_source_details=oci.containerengine.NodePoolNodeSourceDetailsArgs(
         image_id=node_image_id,
         source_type="IMAGE",
     ),
-    ssh_public_key=get_ssh_key(ssh_key_path)
+    ssh_public_key=get_ssh_key(ssh_key_path),
 )
 
 # Retrieve the kubeconfig
 cluster_kube_config = oke_cluster.id.apply(
-    lambda cid: oci.containerengine.get_cluster_kube_config(cluster_id=cid))
+    lambda cid: oci.containerengine.get_cluster_kube_config(cluster_id=cid)
+)
 cluster_kube_config.content.apply(
-    lambda cc: open('kubeconfig', 'w+').write(cc))
+    lambda cc: open("kubeconfig", "w+").write(cc))
 
-pulumi.export('vcn_id', vcn.id)
-pulumi.export('internet_gateway_id', internet_gateway.id)
-pulumi.export('nat_gateway_id', nat_gateway.id)
-pulumi.export('service_gateway_id', service_gateway.id)
-pulumi.export('public_subnet_id', public_subnet.id)
-pulumi.export('pods_subnet_id', pods_subnet.id)
-pulumi.export('public_security_list_id', public_security_list.id)
-pulumi.export('workers_security_list_id', workers_security_list.id)
-pulumi.export('pods_security_list_id', pods_security_list.id)
+pulumi.export("vcn_id", vcn.id)
+pulumi.export("internet_gateway_id", internet_gateway.id)
+pulumi.export("nat_gateway_id", nat_gateway.id)
+pulumi.export("service_gateway_id", service_gateway.id)
+pulumi.export("public_subnet_id", public_subnet.id)
+pulumi.export("pods_subnet_id", pods_subnet.id)
+pulumi.export("public_security_list_id", public_security_list.id)
+pulumi.export("workers_security_list_id", workers_security_list.id)
+pulumi.export("pods_security_list_id", pods_security_list.id)
 
 pulumi.export("cluster_id", oke_cluster.id)
 pulumi.export("node_pool_id", node_pool.id)
