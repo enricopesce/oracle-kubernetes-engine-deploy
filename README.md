@@ -13,9 +13,8 @@ I used Pulumi as an IaC tool because, for various personal reasons, I prefer it 
 The main requirements that motivated me to develop this code are as follows:
 
 - **Simplicity**: I have customers who need to be up and running in minutes. We need a good blueprint to start without complexity and requiring a deep understanding.
-- **Functionality**: Most online examples available are complex and non-functional.
+- **Working**: Most online examples available are complex and non-functional.
 - **Well-architected**: The template is designed to cover the best possible security practices, such as embracing all availability domains, restricted ACLs, native VCN networking etc.
-
 
 ## Architecture deployed with EasyOKE
 
@@ -33,6 +32,7 @@ I chose Pulumi because it is very easy to automate and develop logical implement
 
 - Automatic creation of the VCN with subnetting calculation; you only need to define the supernet CIDR.
 - Automatic discovery of all availability domains to best configure the OKE pools spreaded across all domains to obtain maximum availability.
+- Automatic discovery of the latest, correct and optimized OKE node image.
 - Kubernetes config file automagically generated, ready to use, for example, with `export KUBECONFIG=$PWD/kubeconfig`.
 
 ## Prerequisites
@@ -46,7 +46,7 @@ I chose Pulumi because it is very easy to automate and develop logical implement
 
 Clone this repository and downloads all Python requirements.
 
-``` bash
+```bash
 git clone https://github.com/enricopesce/easyoke.git
 cd easyoke
 pip install -r requirements.txt
@@ -56,7 +56,7 @@ pip install -r requirements.txt
 
 Optional: Use local state file (if you don't save your data on pulumi cloud)
 
-``` bash
+```bash
 mkdir oci-stack-statefile
 pulumi login file://oci-stack-statefile
 pulumi stack init testing
@@ -66,33 +66,32 @@ There are some configurations necessary to personalize the stack configuration.
 
 Required config:
 
-``` bash
-pulumi config set compartment_ocid "Your compartment ID"
+```bash
+pulumi config set compartment_ocid "ocid1.compartment.oc1..aaaaaaaaqqu7dsadsadsadsdsdasdsdasdsad" # compartment ocid example
 ```
 
 Optional configs:
 
-``` bash
-pulumi config set vcn_cidr_block "10.0.0.0/16"
-pulumi config set node_shape "VM.Standard.E5.Flex"
-pulumi config set kubernetes_version "v1.29.1"
+```bash
+pulumi config set vcn_cidr_block "10.0.0.0/16" # the supernet
+pulumi config set node_shape "VM.Standard.E5.Flex" # the shape type
+pulumi config set kubernetes_version "v1.29.1" # the supported OKE kubernetes version
 pulumi config set oke_min_nodes "3" # minimal Kubernetes nodes
-pulumi config set node_image_id "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaaxhd3lt7dttn22pwvhzyksgcm3mxbksnowz47b3oku5hbc6rlisvq" # the optimized compute OKE image
 pulumi config set oke_ocpus "2" # OCPU numbers per node
 pulumi config set oke_memory_in_gbs "32" # RAM memory per node
-pulumi config set ssh_key_path "Your public id_dsa key file path" 
+pulumi config set ssh_key_path "Your public id_dsa key file path"
 ```
 
-I suggest to use all options to best fit you requirements, all default settings are saved on Pulumi.yaml file.
+I suggest you to use all options to best fit you requirements, all default settings are saved on Pulumi.yaml file.
 
 you can display all configurations set via the following command
 
-``` bash
-pulumi config 
+```bash
+pulumi config
 KEY                 VALUE
 compartment_ocid    ocid1.compartment.oc1..aaaaaaaaqqu7dsadsadsadsdsdasdsdasdsad
 kubernetes_version  v1.29.1
-node_image_id       
+node_image_id
 node_shape          VM.Standard.A1.Flex
 oke_memory_in_gbs   32
 oke_min_nodes       3
@@ -106,7 +105,7 @@ pulumi:tags         {"pulumi:template":"python"}
 
 The deployment phase is very easy:
 
-``` bash
+```bash
 pulumi up
 ```
 
@@ -116,7 +115,7 @@ The creation needs 10/15 minutes
 
 When the deployment is done, you can use directly the kubeconfig file created in the same path or copy where you prefer
 
-``` bash
+```bash
 chmod 600 kubeconfig
 export KUBECONFIG=$PWD/kubeconfig
 kubectl get pods -A
@@ -142,9 +141,9 @@ kube-system   vcn-native-ip-cni-xl74b                1/1     Running   0        
 
 ## Destroy the stack
 
-Before destroying the Pulumi stack, delete the possible resources created by OKE, such as application load balancer (via OCI Console ) or clean the Kubernetes services (Using kubectl) 
+Before destroying the Pulumi stack, delete the possible resources created by OKE, such as application load balancer (via OCI Console ) or clean the Kubernetes services (Using kubectl)
 
-``` bash
+```bash
 pulumi destroy
 ```
 
