@@ -1,7 +1,6 @@
 import pulumi
 import pulumi_oci as oci
 import ipaddress
-import os
 import re
 
 ###################################################################################################################################
@@ -35,15 +34,6 @@ def get_ads(ads, net):
     return z
 
 
-def get_ssh_key(key_path):
-    if not os.path.isfile(key_path):
-        raise FileNotFoundError(
-            f"SSH public key file not found at path: {key_path}")
-    with open(key_path, "r") as public_key_file:
-        ssh_key = public_key_file.read()
-    return ssh_key
-
-
 def calculate_subnets(cidr, num_subnets):
     supernet = ipaddress.ip_network(cidr)
     new_prefix_length = supernet.prefixlen
@@ -67,7 +57,7 @@ oke_min_nodes = config.require("oke_min_nodes")
 node_image_id = config.require("node_image_id")
 oke_ocpus = config.require("oke_ocpus")
 oke_memory_in_gbs = config.require("oke_memory_in_gbs")
-ssh_key_path = config.require("ssh_key_path")
+ssh_key = config.require("ssh_key")
 
 (
     loadbalancers_subnet_address,
@@ -658,7 +648,7 @@ node_pool = oci.containerengine.NodePool(
         image_id=node_image_id,
         source_type="IMAGE",
     ),
-    ssh_public_key=get_ssh_key(ssh_key_path),
+    ssh_public_key=ssh_key,
 )
 
 # Retrieve the kubeconfig
@@ -677,6 +667,5 @@ pulumi.export("pods_subnet_id", pods_subnet.id)
 pulumi.export("public_security_list_id", public_security_list.id)
 pulumi.export("workers_security_list_id", workers_security_list.id)
 pulumi.export("pods_security_list_id", pods_security_list.id)
-
 pulumi.export("cluster_id", oke_cluster.id)
 pulumi.export("node_pool_id", node_pool.id)
