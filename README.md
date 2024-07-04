@@ -79,7 +79,7 @@ pulumi config set kubernetes_version "v1.29.1" # the supported OKE kubernetes ve
 pulumi config set oke_min_nodes "3" # minimal Kubernetes nodes
 pulumi config set oke_ocpus "2" # OCPU numbers per node
 pulumi config set oke_memory_in_gbs "32" # RAM memory per node
-pulumi config set ssh_key_path "Your public id_dsa key file path"
+pulumi config set ssh_key "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7Q8zBoB...." # ssh key content
 ```
 
 I suggest you to use all options to best fit you requirements, all default settings are saved on Pulumi.yaml file.
@@ -96,7 +96,7 @@ node_shape          VM.Standard.A1.Flex
 oke_memory_in_gbs   32
 oke_min_nodes       3
 oke_ocpus           2
-ssh_key_path        id_dsa.key.pub
+ssh_key             ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7...
 vcn_cidr_block      10.0.0.0/16
 pulumi:tags         {"pulumi:template":"python"}
 ```
