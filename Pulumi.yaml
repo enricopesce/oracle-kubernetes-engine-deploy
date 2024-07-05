@@ -36,7 +36,7 @@ config:
     type: string
     description: The Memory in GB configured in every worker nodes
     default: "32"
-  ssh_key_path:
+  ssh_key:
     type: string
     description: The ssh key
     default: ""

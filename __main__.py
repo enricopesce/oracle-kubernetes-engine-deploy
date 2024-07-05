@@ -648,7 +648,7 @@ node_pool = oci.containerengine.NodePool(
         image_id=node_image_id,
         source_type="IMAGE",
     ),
-    ssh_public_key=ssh_key,
+    ssh_public_key=ssh_key if ssh_key else None,
 )
 
 # Retrieve the kubeconfig
