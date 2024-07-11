@@ -1,8 +1,8 @@
 # EeasyOKE project
 
-## Automated Kubernetes Cluster Deployment on Oracle Cloud Infrastructure
+## Automated Kubernetes Cluster Deployment on Oracle Cloud Infrastructure up and running in minutes
 
-This IaC code provides a simple way to automate the deployment a OKE cluster on Oracle Cloud Infrastructure.
+This IaC code provides a simple way to automate the deployment a OKE cluster on Oracle Cloud Infrastructure including all requirements.
 
 It is useful for starting without extensive expertise or as a foundation code ready to extend.
 
@@ -12,7 +12,7 @@ I used Pulumi as an IaC tool because, for various personal reasons, I prefer it 
 
 The main requirements that motivated me to develop this code are as follows:
 
-- **Simplicity**: I have customers who need to be up and running in minutes. We need a good blueprint to start without complexity and requiring a deep understanding.
+- **Simplicity**: Up and running in minutes without any prompt and OCI expertise.
 - **Working**: Most online examples available are complex and non-functional.
 - **Well-architected**: The template is designed to cover the best possible security practices, such as embracing all availability domains, restricted ACLs, native VCN networking etc.
 
