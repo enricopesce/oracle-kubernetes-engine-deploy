@@ -23,7 +23,7 @@ config:
   oke_min_nodes:
     type: string
     description: The starting worker nodes
-    default: "3"
+    default: "2"
   node_image_id:
     type: string
     description: The starting worker nodes
@@ -35,7 +35,7 @@ config:
   oke_memory_in_gbs:
     type: string
     description: The Memory in GB configured in every worker nodes
-    default: "32"
+    default: "12"
   ssh_key:
     type: string
     description: The ssh key
