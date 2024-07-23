@@ -53,10 +53,10 @@ compartment_id = config.require("compartment_ocid")
 vcn_cidr_block = config.require("vcn_cidr_block")
 node_shape = config.require("node_shape")
 kubernetes_version = config.require("kubernetes_version")
-oke_min_nodes = config.require("oke_min_nodes")
+oke_min_nodes = int(config.require("oke_min_nodes"))
 node_image_id = config.require("node_image_id")
-oke_ocpus = config.require("oke_ocpus")
-oke_memory_in_gbs = config.require("oke_memory_in_gbs")
+oke_ocpus = float(config.require("oke_ocpus"))
+oke_memory_in_gbs = float(config.require("oke_memory_in_gbs"))
 ssh_key = config.require("ssh_key")
 
 (
@@ -383,7 +383,7 @@ pods_security_list = oci.core.SecurityList(
             protocol="6",
             destination="0.0.0.0/0",
             destination_type="CIDR_BLOCK",
-            tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
+            tcp_options=oci.core.SecurityListEgressSecurityRuleTcpOptionsArgs(
                 max=443,
                 min=443,
             ),
@@ -393,7 +393,7 @@ pods_security_list = oci.core.SecurityList(
             protocol="6",
             destination=public_subnet_address,
             destination_type="CIDR_BLOCK",
-            tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
+            tcp_options=oci.core.SecurityListEgressSecurityRuleTcpOptionsArgs(
                 max=6443,
                 min=6443,
             ),
@@ -403,7 +403,7 @@ pods_security_list = oci.core.SecurityList(
             protocol="6",
             destination=public_subnet_address,
             destination_type="CIDR_BLOCK",
-            tcp_options=oci.core.SecurityListIngressSecurityRuleTcpOptionsArgs(
+            tcp_options=oci.core.SecurityListEgressSecurityRuleTcpOptionsArgs(
                 max=12250,
                 min=12250,
             ),
@@ -542,7 +542,7 @@ public_subnet = oci.core.Subnet(
     display_name="PublicSubnet",
     dns_label="public",
     prohibit_public_ip_on_vnic=False,
-    route_table_id=public_route_table,
+    route_table_id=public_route_table.id,
 )
 
 # Create a Private Subnet within the VCN
@@ -555,7 +555,7 @@ workers_subnet = oci.core.Subnet(
     display_name="WorkersSubnet",
     dns_label="workers",
     prohibit_public_ip_on_vnic=True,
-    route_table_id=workers_route_table,
+    route_table_id=workers_route_table.id,
 )
 
 # Create a Pods Subnet within the VCN
@@ -568,7 +568,7 @@ pods_subnet = oci.core.Subnet(
     display_name="PodsSubnet",
     dns_label="pods",
     prohibit_public_ip_on_vnic=True,
-    route_table_id=workers_route_table,
+    route_table_id=workers_route_table.id,
 )
 
 # Create a LoadBalancers Subnet within the VCN
@@ -581,7 +581,7 @@ loadbalancers_subnet = oci.core.Subnet(
     display_name="LoadBalancersSubnet",
     dns_label="loadbalancers",
     prohibit_public_ip_on_vnic=False,
-    route_table_id=loadbalancers_route_table,
+    route_table_id=loadbalancers_route_table.id,
 )
 
 # Create the OKE cluster
@@ -605,7 +605,7 @@ oke_cluster = oci.containerengine.Cluster(
     type="BASIC_CLUSTER",
     vcn_id=vcn.id,
     endpoint_config=oci.containerengine.ClusterEndpointConfigArgs(
-        subnet_id=public_subnet, is_public_ip_enabled=True
+        subnet_id=public_subnet.id, is_public_ip_enabled=True
     ),
 )
 

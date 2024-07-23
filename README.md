@@ -56,7 +56,10 @@ Clone this repository and downloads all Python requirements.
 ```bash
 git clone https://github.com/enricopesce/easyoke.git
 cd easyoke
-pip install -r requirements.txt
+python -m venv .venv
+source .venv/bin/activate
+pip install poetry
+pulumi install
 ```
 
 ## Configuring the stack
@@ -66,6 +69,12 @@ Optional: Use local state file (if you don't save your data on pulumi cloud)
 ```bash
 mkdir oci-stack-statefile
 pulumi login file://oci-stack-statefile
+pulumi stack init testing
+```
+
+Initialize the pulumi stack
+
+```bash
 pulumi stack init testing
 ```
 
