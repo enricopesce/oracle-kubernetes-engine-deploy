@@ -24,8 +24,6 @@ The main requirements that motivated me to develop this code are as follows:
 
 The architecture defined is based on the well written [OCI article](https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengnetworkconfigexample.htm#example-oci-cni-publick8sapi_privateworkers_publiclb)
 
-![OKE architecture](arch.png "OKE architecture")
-
 OKE cluster is depolyed as [BASIC](https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengcomparingenhancedwithbasicclusters_topic.htm) cluster type with no costs.
 
 Costs depending on shape type and nodes selected, please estimate the correct costs with the [Cost estimator page](https://www.oracle.com/cloud/costestimator.html).
@@ -69,7 +67,6 @@ Optional: Use local state file (if you don't save your data on pulumi cloud)
 ```bash
 mkdir oci-stack-statefile
 pulumi login file://oci-stack-statefile
-pulumi stack init testing
 ```
 
 Initialize the pulumi stack
