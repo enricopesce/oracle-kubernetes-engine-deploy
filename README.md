@@ -25,6 +25,8 @@ The main features that differentiate this tool from the oci web console wizard a
 
 The architecture defined is based on the well written [OCI article](https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengnetworkconfigexample.htm#example-oci-cni-publick8sapi_privateworkers_publiclb)
 
+![The complete architecture](arch.png)
+
 OKE cluster is depolyed as [BASIC](https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengcomparingenhancedwithbasicclusters_topic.htm) cluster type with no costs.
 
 Costs depending on shape type and nodes selected, please estimate the correct costs with the [Cost estimator page](https://www.oracle.com/cloud/costestimator.html).
