@@ -21,10 +21,6 @@ The main features that differentiate this tool from the oci web console wizard a
 - Automatic discovery and configuration of the latest, correct and optimized OKE node image to use.
 - Kubernetes config file automagically generated, ready to use, for example, with `export KUBECONFIG=$PWD/kubeconfig`.
 
-🚀 Check out how easy it is to deploy and use a Kubernetes cluster! 🌟
-
-![Demo](demo.gif)
-
 ## Architecture deployed with EasyOKE
 
 The architecture defined is based on the well written [OCI article](https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengnetworkconfigexample.htm#example-oci-cni-publick8sapi_privateworkers_publiclb)
@@ -34,7 +30,6 @@ OKE cluster is depolyed as [BASIC](https://docs.oracle.com/en-us/iaas/Content/Co
 Costs depending on shape type and nodes selected, please estimate the correct costs with the [Cost estimator page](https://www.oracle.com/cloud/costestimator.html).
 
 The default settings deploy a simple cluster leveraging the [Oracle Cloud Free Tier](https://www.oracle.com/cloud/free/) with no cost, always free (2 VM ARM Ampere A1 Compute).
-
 
 ## Prerequisites
 
