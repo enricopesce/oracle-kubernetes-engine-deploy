@@ -1,12 +1,10 @@
-# EeasyOKE project
+# Oracle kubernetes engine deploy project
 
 ## Automated Kubernetes Cluster Deployment on Oracle Cloud Infrastructure up and running in minutes
 
-This IaC code provides a simple way to automate the deployment a OKE cluster on Oracle Cloud Infrastructure including all requirements.
+This tool provides a simple way to automate the deployment a OKE cluster on Oracle Cloud Infrastructure including all requirements with no stress.
 
 It is useful for starting without extensive expertise or as a foundation code ready to extend.
-
-I used Pulumi as an IaC tool because, for various personal reasons, I prefer it over Terraform. However, don't worry; under the hood, Pulumi uses Terraform.
 
 ## Why EasyOKE?
 
@@ -14,7 +12,14 @@ The main requirements that motivated me to develop this code are as follows:
 
 - **Simplicity**: Up and running in minutes without any prompt and OCI expertise.
 - **Working**: Most online examples available are complex and non-functional.
-- **Well-architected**: The template is designed to cover the best possible security practices, such as embracing all availability domains, restricted ACLs, native VCN networking etc.
+- **Well-architected**: Best security practices icluded! such as embracing all availability domains, restricted ACLs, native VCN networking etc.
+
+The main features that differentiate this tool from the oci web console wizard and other terraform projects are:
+
+- Automatic creation of the VCN with subnetting calculation; you only need to define the supernet CIDR.
+- Automatic discovery and configuration of all availability domains to spreaded nodes and obtain the maximum availability.
+- Automatic discovery and configuration of the latest, correct and optimized OKE node image to use.
+- Kubernetes config file automagically generated, ready to use, for example, with `export KUBECONFIG=$PWD/kubeconfig`.
 
 🚀 Check out how easy it is to deploy and use a Kubernetes cluster! 🌟
 
@@ -30,15 +35,6 @@ Costs depending on shape type and nodes selected, please estimate the correct co
 
 The default settings deploy a simple cluster leveraging the [Oracle Cloud Free Tier](https://www.oracle.com/cloud/free/) with no cost, always free (2 VM ARM Ampere A1 Compute).
 
-
-## Why Pulumi?
-
-I chose Pulumi because it is very easy to automate and develop logical implementations. The main features are:
-
-- Automatic creation of the VCN with subnetting calculation; you only need to define the supernet CIDR.
-- Automatic discovery of all availability domains to best configure the OKE pools spreaded across all domains to obtain maximum availability.
-- Automatic discovery of the latest, correct and optimized OKE node image.
-- Kubernetes config file automagically generated, ready to use, for example, with `export KUBECONFIG=$PWD/kubeconfig`.
 
 ## Prerequisites
 
