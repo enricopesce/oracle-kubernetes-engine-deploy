@@ -10,7 +10,7 @@ import re
 
 def get_oke_image(source, shape, oke_version):
     version = format_version(oke_version)
-    if re.match("^VM\.Standard\.A\d+\.Flex", shape):
+    if re.match("^VM\\.Standard\\.A\\d+\\.Flex", shape):
         pattern = f"(Oracle-Linux).*?(aarch64).*?({version})"
     elif re.match(".*GPU.*", shape):
         pattern = f"(Oracle-Linux).*?(GPU).*?({version})"
