@@ -1,4 +1,4 @@
-# Oracle kubernetes engine deploy project
+# Oracle kubernetes engine deploy project (OKED)
 
 ## Automated Kubernetes Cluster Deployment on Oracle Cloud Infrastructure up and running in minutes
 
@@ -6,7 +6,7 @@ This tool provides a simple way to automate the deployment a OKE cluster on Orac
 
 It is useful for starting without extensive expertise or as a foundation code ready to extend.
 
-## Why EasyOKE?
+## Why OKED?
 
 The main requirements that motivated me to develop this code are as follows:
 
@@ -20,6 +20,10 @@ The main features that differentiate this tool from the oci web console wizard a
 - Automatic discovery and configuration of all availability domains to spreaded nodes and obtain the maximum availability.
 - Automatic discovery and configuration of the latest, correct and optimized OKE node image to use.
 - Kubernetes config file automagically generated, ready to use, for example, with `export KUBECONFIG=$PWD/kubeconfig`.
+
+Demo:
+
+![Demo](demo.gif)
 
 ## Architecture deployed with EasyOKE
 

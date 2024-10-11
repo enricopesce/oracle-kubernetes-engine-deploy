@@ -633,8 +633,7 @@ node_pool = oci.containerengine.NodePool(
     compartment_id=compartment_id,
     kubernetes_version=kubernetes_version,
     node_config_details=oci.containerengine.NodePoolNodeConfigDetailsArgs(
-        placement_configs=ads.apply(
-            lambda ads: get_ads(ads, workers_subnet.id)),
+        placement_configs=ads.apply(lambda ads: get_ads(ads, workers_subnet.id)),
         size=oke_min_nodes,
         node_pool_pod_network_option_details=oci.containerengine.NodePoolNodeConfigDetailsNodePoolPodNetworkOptionDetailsArgs(
             cni_type="OCI_VCN_IP_NATIVE", pod_subnet_ids=[pods_subnet.id]
@@ -655,8 +654,8 @@ node_pool = oci.containerengine.NodePool(
 cluster_kube_config = oke_cluster.id.apply(
     lambda cid: oci.containerengine.get_cluster_kube_config(cluster_id=cid)
 )
-cluster_kube_config.content.apply(
-    lambda cc: open("kubeconfig", "w+").write(cc))
+
+cluster_kube_config.content.apply(lambda cc: open("kubeconfig", "w+").write(cc))
 
 pulumi.export("vcn_id", vcn.id)
 pulumi.export("internet_gateway_id", internet_gateway.id)
