@@ -11,8 +11,8 @@ It is useful for starting without extensive expertise or as a foundation code re
 The main requirements that motivated me to develop this code are as follows:
 
 - **Simplicity**: Up and running in minutes without any prompt and OCI expertise.
-- **Working**: Most online examples available are complex and non-functional.
-- **Well-architected**: Best security practices icluded! such as embracing all availability domains, restricted ACLs, native VCN networking etc.
+- **Working**: Most online examples available are complex to understand and non-functional.
+- **Well-architected**: Best security practices included based on the well written [OCI article](https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengnetworkconfigexample.htm#example-oci-cni-publick8sapi_privateworkers_publiclb)
 
 The main features that differentiate this tool from the oci web console wizard and other terraform projects are:
 
