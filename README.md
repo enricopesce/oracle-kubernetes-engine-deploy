@@ -24,6 +24,7 @@ The main features that differentiate this tool from the oci web console wizard a
 - Automatic discovery and configuration of all availability domains to spreaded nodes and obtain the maximum availability.
 - Automatic discovery and configuration of the latest, correct and optimized OKE node image to use.
 - Kubernetes config file automagically generated, ready to use, for example, with `export KUBECONFIG=$PWD/kubeconfig`.
+- Easily extendible script based on well-known open-source Pulumi framework
 
 ## Architecture deployed with EasyOKE
 
