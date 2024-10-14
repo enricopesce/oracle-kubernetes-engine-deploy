@@ -36,7 +36,7 @@ OKE cluster is depolyed as [BASIC](https://docs.oracle.com/en-us/iaas/Content/Co
 
 Costs depending on shape type and nodes selected, please estimate the correct costs with the [Cost estimator page](https://www.oracle.com/cloud/costestimator.html).
 
-The default settings deploy a simple cluster leveraging the [Oracle Cloud Free Tier](https://www.oracle.com/cloud/free/) with no cost, always free (2 VM ARM Ampere A1 Compute).
+The default settings deploy a simple cluster leveraging the [Oracle Cloud Free Tier](https://www.oracle.com/cloud/free/) with NO COST, leveraging the [Oracle Cloud Free Tier](https://www.oracle.com/cloud/free/) (2 VM ARM Ampere A1 Compute).
 
 ## Prerequisites
 
