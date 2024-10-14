@@ -2,7 +2,7 @@
 
 ## Automated Kubernetes Cluster Deployment on Oracle Cloud Infrastructure up and running in minutes
 
-This tool provides a simple way to automate the deployment a OKE cluster on Oracle Cloud Infrastructure including all requirements with no stress.
+This tool provides a simple way to automate the deployment of an OKE cluster on Oracle Cloud Infrastructure, including all requirements, without stress.
 
 It is useful for starting without extensive expertise or as a foundation code ready to extend.
 
