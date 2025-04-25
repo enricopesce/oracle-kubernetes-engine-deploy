@@ -86,7 +86,7 @@ Optional configs:
 ```bash
 pulumi config set vcn_cidr_block "10.0.0.0/16" # the supernet
 pulumi config set node_shape "VM.Standard.E5.Flex" # the shape type
-pulumi config set kubernetes_version "v1.29.1" # the supported OKE kubernetes version
+pulumi config set kubernetes_version "v1.32.1" # the supported OKE kubernetes version
 pulumi config set oke_min_nodes "3" # minimal Kubernetes nodes
 pulumi config set oke_ocpus "2" # OCPU numbers per node
 pulumi config set oke_memory_in_gbs "32" # RAM memory per node
@@ -101,7 +101,7 @@ you can display all configurations set via the following command
 pulumi config
 KEY                 VALUE
 compartment_ocid    ocid1.compartment.oc1..aaaaaaaaqqu7dsadsadsadsdsdasdsdasdsad
-kubernetes_version  v1.29.1
+kubernetes_version  v1.32.1
 node_image_id
 node_shape          VM.Standard.A1.Flex
 oke_memory_in_gbs   32
