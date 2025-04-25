@@ -26,7 +26,7 @@ The main features that differentiate this tool from the oci web console wizard a
 - Kubernetes config file automagically generated, ready to use, for example, with `export KUBECONFIG=$PWD/kubeconfig`.
 - Easily extendible script based on well-known open-source Pulumi framework
 
-## Architecture deployed with EasyOKE
+## Architecture deployed with oracle-kubernetes-engine-deploy
 
 The architecture defined is based on the well written [OCI article](https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengnetworkconfigexample.htm#example-oci-cni-publick8sapi_privateworkers_publiclb)
 
@@ -50,8 +50,8 @@ The default settings deploy a simple cluster leveraging the [Oracle Cloud Free T
 Clone this repository and downloads all Python requirements.
 
 ```bash
-git clone https://github.com/enricopesce/easyoke.git
-cd easyoke
+git clone https://github.com/enricopesce/oracle-kubernetes-engine-deploy.git
+cd oracle-kubernetes-engine-deploy
 python -m venv .venv
 source .venv/bin/activate
 pip install poetry
